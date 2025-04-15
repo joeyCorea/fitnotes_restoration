@@ -3,6 +3,7 @@ import sqlite3
 import argparse
 import json
 from collections import defaultdict
+import pandas as pd
 
 
 def parse_args():
@@ -64,62 +65,60 @@ def insert_exercise(conn, name, category_id, dry_run, logs):
         conn.commit()
 
 
-def process_mappings(conn, mapping, dry_run, logs):
+def process_mappings(conn, mapping, dry_run, logs, export):
     existing_exercises = get_existing_exercises(conn)
     category_map = get_category_map(conn)
-
     for row in mapping:
         recommendation = row["my_recommendation"].strip()
         csv_name = row["csv"].strip()
         backup_name = row["backup"].strip() if row["backup"] else None
-
         if recommendation == "new_ex":
             if csv_name in existing_exercises:
                 log_message(logs, "warning", f"Exercise '{csv_name}' already exists, but marked as new_ex")
-            cat_name = infer_category_from_name(csv_name)
+            # cat_name = infer_category_from_name(csv_name)
+            cat_name = row["category"]
             if cat_name not in category_map:
                 insert_category(conn, cat_name, dry_run, logs)
                 category_map = get_category_map(conn)
             insert_exercise(conn, csv_name, category_map[cat_name], dry_run, logs)
+            #update the existing exercises
+            existing_exercises = get_existing_exercises(conn)
 
         elif recommendation == "rename_backup":
             if backup_name not in existing_exercises:
                 log_message(logs, "warning", f"Cannot rename: backup name '{backup_name}' does not exist")
             else:
                 rename_exercise(conn, backup_name, csv_name, dry_run, logs)
+                #update the existing exercises
+                existing_exercises = get_existing_exercises(conn)
 
         elif recommendation == "rename_csv":
-            if csv_name not in existing_exercises:
-                log_message(logs, "warning", f"Cannot rename: csv name '{csv_name}' does not exist")
-            else:
-                rename_exercise(conn, csv_name, backup_name, dry_run, logs)
-
+            # if csv_name not in existing_exercises:
+            #     log_message(logs, "warning", f"Cannot rename: csv name '{csv_name}' does not exist")
+            # else:
+            #     rename_exercise(conn, csv_name, backup_name, dry_run, logs)
+            export.loc[export["exercise"] == row["csv"], "exercise"] = row["backup"]
         else:
             log_message(logs, "warning", f"Unknown recommendation type: {recommendation} for '{csv_name}'")
 
         if not backup_name and recommendation != "new_ex":
             log_message(logs, "warning", f"Empty backup value for '{csv_name}' but recommendation is not 'new_ex'")
-
-
-def infer_category_from_name(name):
-    name = name.lower()
-    if "push" in name: return "Shoulders"
-    if "chin" in name or "pull" in name: return "Back"
-    if "squat" in name or "pistol" in name: return "Legs"
-    if "bar" in name or "forearm" in name: return "Forearms"
-    if "run" in name: return "Cardio"
-    if "systema" in name: return "Misc"
-    return "Misc"
+    return export
 
 
 def main():
     args = parse_args()
     logs = []
     conn = sqlite3.connect(args.db)
-
+    #TODO: not the most memory friendly thing to do here. But didn't want to do all the fiddling with find and replace manually
+    #TODO: find out why they used csv instead of pandas. Maybe because csv is built-in?
+    export = pd.read_csv(args.csv)
+    print(f"rows in export: {len(export)}")
     try:
         mapping = load_mapping(args.map)
-        process_mappings(conn, mapping, args.dry_run, logs)
+        export = process_mappings(conn, mapping, args.dry_run, logs, export)
+        #insert training logs and comments
+
     finally:
         conn.close()
 

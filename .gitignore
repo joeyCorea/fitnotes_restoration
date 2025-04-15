@@ -1,3 +1,4 @@
 archive
 *.csv*
 *.fitnotes
+exercise_migration_log.json
