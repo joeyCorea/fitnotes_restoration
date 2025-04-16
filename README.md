@@ -15,6 +15,8 @@ This project is the result — a pipeline that turns a humble CSV export into a 
 
 _It puts your training history back where it belongs — in your hands._
 
+# This is what I was working with
+
 ## 1. CSV Export: FitNotes_Export_note20.csv
 
 | Column        | Type   | Used In                    | Description / Notes                                                                 |
