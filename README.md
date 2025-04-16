@@ -1,4 +1,19 @@
+# Because your workout history is more than just data — it’s your story.
 
+In March 2025, my phone died unexpectedly.
+
+No big deal, I thought. After all, I’d been exporting my workout logs from FitNotes _every_ week. But what I didn’t realize was this:
+
+**An export is _not_ a backup.**
+
+Five years of meticulously logged training — gone. All my personal records, all my progress, all the subtle cues and trends that kept me pushing forward. I rely on numbers to stay motivated, to know what "better" looks like. Without that data, every workout felt like it started from zero.
+
+That’s when I decided:
+If the app won’t let me restore, I’ll build the restore myself.
+
+This project is the result — a pipeline that turns a humble CSV export into a full-fledged FitNotes backup, ready to be restored directly into the app. It parses and transforms, maps and merges, re-creates exercises and training logs, and even restores your notes. In short:
+
+_It puts your training history back where it belongs — in your hands._
 
 ## 1. CSV Export: FitNotes_Export_note20.csv
 
